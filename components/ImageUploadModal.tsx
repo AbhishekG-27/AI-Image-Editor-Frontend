@@ -1,16 +1,12 @@
 import React, { useRef, useState } from "react";
 import InpaintCanvas from "./InpaintCanvas";
 
-type Props = {
-  isOpen: boolean;
-  onClose: () => void;
-};
-
-const ImageUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
+const InpaintEditor: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imageElement, setImageElement] = useState<HTMLImageElement | null>(
     null
   );
+  const [responseImage, setResponseImage] = useState<string | null>(null); // base64 or blob URL
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -27,46 +23,60 @@ const ImageUploadModal: React.FC<Props> = ({ isOpen, onClose }) => {
     reader.readAsDataURL(file);
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60">
-      <div className="bg-white rounded-xl shadow-lg p-6 w-[90%] max-w-4xl max-h-[90%] overflow-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Upload an Image</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-black text-lg font-bold"
-          >
-            ×
-          </button>
-        </div>
+    <div className="flex w-full h-[90vh] overflow-hidden">
+      {/* Left - Upload & Canvas */}
+      <div className="w-1/2 bg-gray-50 p-6 flex flex-col overflow-auto border-r">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Inpaint Tool</h2>
 
         {!imageElement && (
-          <div className="space-y-4 text-center">
+          <div className="flex-1 flex flex-col items-center justify-center">
+            <label
+              htmlFor="file-upload"
+              className="cursor-pointer border-2 border-dashed border-blue-400 text-blue-600 px-8 py-16 rounded-xl text-center transition hover:bg-blue-50"
+            >
+              <p className="text-lg font-medium">Click to upload an image</p>
+              <p className="text-sm text-gray-500 mt-1">PNG, JPG, or JPEG</p>
+            </label>
             <input
+              id="file-upload"
               type="file"
               accept="image/*"
               ref={fileInputRef}
               onChange={handleImageUpload}
-              className="block w-full text-sm text-gray-500
-                         file:mr-4 file:py-2 file:px-4
-                         file:rounded-full file:border-0
-                         file:text-sm file:font-semibold
-                         file:bg-blue-50 file:text-blue-700
-                         hover:file:bg-blue-100"
+              className="hidden"
             />
           </div>
         )}
 
         {imageElement && (
-          <div className="mt-4 overflow-auto max-h-[70vh] max-w-full border rounded flex justify-center">
-            <InpaintCanvas uploadedImage={imageElement} />
+          <div className="flex-1 border rounded-xl">
+            <InpaintCanvas
+              uploadedImage={imageElement}
+              setResponseImage={setResponseImage}
+            />
           </div>
+        )}
+      </div>
+
+      {/* Right - Response Display */}
+      <div className="w-1/2 bg-white p-6 flex flex-col items-center justify-center overflow-auto">
+        <h2 className="text-2xl font-bold text-gray-800 mb-4">Result</h2>
+
+        {!responseImage ? (
+          <p className="text-gray-500">
+            Your inpainted image will appear here.
+          </p>
+        ) : (
+          <img
+            src={responseImage}
+            alt="Inpainted Result"
+            className="max-w-full max-h-full rounded-xl border shadow"
+          />
         )}
       </div>
     </div>
   );
 };
 
-export default ImageUploadModal;
+export default InpaintEditor;

@@ -19,8 +19,8 @@ export default function InpaintCanvas({
   const drawingLayerRef = useRef<any>(null);
   const imageLayerRef = useRef<any>(null);
 
-  const containerWidth = 800;
-  const containerHeight = 600;
+  const containerWidth = Math.min(window.innerWidth - 32, 800);
+  const containerHeight = Math.min(window.innerHeight / 1.8, 600);
 
   const imageWidth = uploadedImage.width;
   const imageHeight = uploadedImage.height;
@@ -116,7 +116,7 @@ export default function InpaintCanvas({
   };
 
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-4 w-full h-full">
+    <div className="flex flex-col items-center justify-center gap-6 p-4 w-full">
       <div
         className="flex items-center justify-center"
         style={{ width: containerWidth, height: containerHeight }}
@@ -161,7 +161,7 @@ export default function InpaintCanvas({
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           placeholder="Enter prompt for inpainting..."
-          className="w-full max-w-xl px-4 py-2 border border-gray-300 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full max-w-xl px-4 py-2 border border-gray-600 bg-gray-800 text-white placeholder-gray-400 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         <button
@@ -170,7 +170,7 @@ export default function InpaintCanvas({
           className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg shadow transition ${
             prompt && !isLoading
               ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-              : "bg-gray-300 text-gray-700 cursor-not-allowed"
+              : "bg-gray-700 text-gray-400 cursor-not-allowed"
           }`}
         >
           {isLoading ? <Spinner /> : "Inpaint"}

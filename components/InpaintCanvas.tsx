@@ -115,66 +115,167 @@ export default function InpaintCanvas({
     }
   };
 
+  const clearCanvas = () => {
+    setLines([]);
+  };
+
   return (
-    <div className="flex flex-col items-center justify-center gap-6 p-4 w-full">
-      <div
-        className="flex items-center justify-center"
-        style={{ width: containerWidth, height: containerHeight }}
-      >
-        <Stage
-          width={containerWidth}
-          height={containerHeight}
-          onMouseDown={handleMouseDown}
-          onMousemove={handleMouseMove}
-          onMouseup={handleMouseUp}
-        >
-          <Layer ref={imageLayerRef}>
-            <KonvaImage
-              image={uploadedImage}
-              ref={imageRef}
-              x={offsetX}
-              y={offsetY}
-              width={scaledWidth}
-              height={scaledHeight}
-            />
-          </Layer>
-          <Layer ref={drawingLayerRef}>
-            {lines.map((line, i) => (
-              <Line
-                key={i}
-                points={line.points}
-                stroke="white"
-                strokeWidth={20}
-                tension={0.5}
-                lineCap="round"
-                globalCompositeOperation="source-over"
-                opacity={0.5}
-              />
-            ))}
-          </Layer>
-        </Stage>
+    <div className="flex flex-col items-center justify-center gap-8 p-4 w-full min-h-screen">
+      {/* Header */}
+      <div className="text-center mb-4">
+        <h2 className="text-3xl font-bold text-black mb-2">
+          AI Image Inpainting
+        </h2>
+        <p className="text-black text-lg">
+          Draw on the areas you want to modify, then describe what you'd like to
+          see
+        </p>
       </div>
 
-      <div className="flex gap-4 w-full justify-center items-center">
-        <input
-          type="text"
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder="Enter prompt for inpainting..."
-          className="w-full max-w-xl px-4 py-2 border border-gray-600 bg-gray-800 text-white placeholder-gray-400 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-
-        <button
-          onClick={sendToBackend}
-          disabled={!prompt || isLoading}
-          className={`flex items-center justify-center gap-2 px-6 py-2 rounded-lg shadow transition ${
-            prompt && !isLoading
-              ? "bg-blue-600 hover:bg-blue-700 text-white cursor-pointer"
-              : "bg-gray-700 text-gray-400 cursor-not-allowed"
-          }`}
+      {/* Canvas Container */}
+      <div className="relative group">
+        <div
+          className="relative overflow-hidden rounded-lg shadow-2xl border-2 border-white/20 transition-all duration-300 group-hover:border-white/40"
+          style={{ width: containerWidth, height: containerHeight }}
         >
-          {isLoading ? <Spinner /> : "Inpaint"}
-        </button>
+          <Stage
+            width={containerWidth}
+            height={containerHeight}
+            onMouseDown={handleMouseDown}
+            onMousemove={handleMouseMove}
+            onMouseup={handleMouseUp}
+            className="relative z-10 cursor-crosshair"
+          >
+            <Layer ref={imageLayerRef}>
+              <KonvaImage
+                image={uploadedImage}
+                ref={imageRef}
+                x={offsetX}
+                y={offsetY}
+                width={scaledWidth}
+                height={scaledHeight}
+              />
+            </Layer>
+            <Layer ref={drawingLayerRef}>
+              {lines.map((line, i) => (
+                <Line
+                  key={i}
+                  points={line.points}
+                  stroke="rgba(255, 255, 255, 0.8)"
+                  strokeWidth={20}
+                  tension={0.5}
+                  lineCap="round"
+                  globalCompositeOperation="source-over"
+                  opacity={0.7}
+                  shadowColor="rgba(255, 255, 255, 0.3)"
+                  shadowBlur={10}
+                />
+              ))}
+            </Layer>
+          </Stage>
+        </div>
+
+        {/* Instructions Overlay */}
+        {lines.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="bg-black/70 backdrop-blur-sm rounded-lg px-6 py-4 text-center border border-white/20">
+              <p className="text-white text-lg font-medium">
+                ✨ Click and drag to paint areas you want to modify
+              </p>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Controls */}
+      <div className="w-full max-w-2xl space-y-4">
+        {/* Prompt Input */}
+        <div className="relative">
+          <input
+            type="text"
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Describe what you want to see in the painted areas..."
+            className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-lg"
+          />
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <button
+            onClick={sendToBackend}
+            disabled={!prompt || isLoading || lines.length === 0}
+            className={`flex items-center justify-center gap-1 px-6 py-3 rounded-lg shadow-lg transition-all duration-200 font-medium text-lg min-w-[140px] border-1 ${
+              prompt && !isLoading && lines.length > 0
+                ? "bg-white text-black cursor-pointer border-white hover:bg-gray-100 hover:text-green-600 transform hover:scale-105"
+                : "bg-black text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            {isLoading ? (
+              <>
+                <Spinner />
+                <span>Generating...</span>
+              </>
+            ) : (
+              <>
+                <svg
+                  className={`w-5 h-5 ${
+                    prompt && !isLoading && lines.length > 0
+                      ? "text-yellow-600"
+                      : ""
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 10V3L4 14h7v7l9-11h-7z"
+                  />
+                </svg>
+                <span>Generate</span>
+              </>
+            )}
+          </button>
+          <button
+            onClick={clearCanvas}
+            disabled={lines.length === 0}
+            className={`flex items-center justify-center gap-2 px-6 py-3 rounded-lg shadow-lg transition-all duration-200 font-medium text-lg border-1 bg-white ${
+              lines.length > 0
+                ? "hover:text-red-600 text-black cursor-pointer border-white/30 hover:border-red-600/50"
+                : "text-gray-500 cursor-not-allowed border-gray-600"
+            }`}
+          >
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              />
+            </svg>
+            Clear
+          </button>
+        </div>
+
+        {/* Status Messages */}
+        {lines.length === 0 && (
+          <div className="text-center text-gray-400 text-sm">
+            Start by painting areas you want to modify
+          </div>
+        )}
+        {lines.length > 0 && !prompt && (
+          <div className="text-center text-gray-300 text-sm">
+            Add a description to generate your image
+          </div>
+        )}
       </div>
     </div>
   );

@@ -6,9 +6,7 @@ import "./App.css";
 export default function App() {
   return (
     <div className="w-full">
-      <header>
-        <Navbar />
-      </header>
+      <Navbar />
       <main>
         <Hero />
         <InpaintEditor />

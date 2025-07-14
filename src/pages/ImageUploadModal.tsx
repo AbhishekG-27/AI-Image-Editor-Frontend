@@ -11,7 +11,7 @@ import {
   RotateCcw,
   Palette,
 } from "lucide-react";
-import InpaintCanvas from "./InpaintCanvas";
+import InpaintCanvas from "../../components/InpaintCanvas";
 
 const InpaintEditor: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +77,7 @@ const InpaintEditor: React.FC = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-8">
             <motion.h1
-              className="text-4xl sm:text-5xl font-bold text-white mb-2"
+              className="text-4xl sm:text-5xl font-bold text-white mt-20"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
@@ -85,7 +85,7 @@ const InpaintEditor: React.FC = () => {
               AI Inpainting Studio
             </motion.h1>
             <motion.p
-              className="text-lg text-gray-300 max-w-2xl mx-auto"
+              className="text-lg text-gray-300 max-w-2xl mx-auto my-3"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.4 }}

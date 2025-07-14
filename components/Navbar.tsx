@@ -3,14 +3,15 @@ import { useEffect, useRef, useState } from "react";
 import { useWindowScroll } from "react-use";
 import { PiPaperPlaneTiltLight } from "react-icons/pi";
 import { IoMenu, IoClose } from "react-icons/io5";
+import { NavLink } from "react-router-dom";
 import Button from "./Button";
 
 const Navbar = () => {
   const navItems = [
-    { text: "Prologue", key: "nav-item1" },
-    { text: "Pricing", key: "nav-item2" },
-    { text: "About", key: "nav-item3" },
-    { text: "Contact", key: "nav-item4" },
+    { text: "Home", key: "home", route: "/" },
+    { text: "Pricing", key: "nav-item2", route: "/pricing" },
+    { text: "About", key: "nav-item3", route: "/about" },
+    { text: "Contact", key: "nav-item4", route: "/contact-us" },
   ];
 
   const navContainerRef = useRef<HTMLDivElement | null>(null);
@@ -53,18 +54,18 @@ const Navbar = () => {
   return (
     <div
       ref={navContainerRef}
-      className={`fixed z-50 top-0 left-1/2 transform -translate-x-1/2 transition-all duration-500 ${
+      className={`fixed z-50 top-0 left-1/2 transform -translate-x-1/2 transition-all duration-200 ${
         isNavVisible ? "top-4 opacity-100" : "-top-24 opacity-0"
-      } w-full sm:w-[90vw] h-16`}
+      } w-[90vw] h-16`}
     >
       <header className="absolute top-1/2 w-full -translate-y-1/2">
         <nav className="flex size-full items-center justify-between px-4 py-2 bg-neutral-950/80 backdrop-blur-md rounded-xl">
           {/* Left side */}
           <div className="flex items-center gap-4">
             <Button
-              id="trial-button"
+              id="login-button"
               rightIcon={<PiPaperPlaneTiltLight />}
-              title="Start Free Trial"
+              title="Login"
               containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
               leftIcon={null}
               onClick={() => {}}
@@ -85,20 +86,26 @@ const Navbar = () => {
           <div className="flex items-center gap-6">
             <div className="hidden md:flex">
               {navItems.map((item) => (
-                <a key={item.key} className="nav-hover-btn cursor-pointer">
+                <NavLink
+                  to={item.route}
+                  key={item.key}
+                  className="nav-hover-btn cursor-pointer"
+                >
                   {item.text}
-                </a>
+                </NavLink>
               ))}
             </div>
-            <Button
-              id="launch-button"
-              title="Launch"
-              containerClass="bg-blue-50 flex items-center cursor-pointer justify-center gap-1"
-              rightIcon={<PiPaperPlaneTiltLight />}
-              leftIcon={null}
-              onClick={() => {}}
-              disabled={false}
-            />
+            <NavLink to="/image-editor">
+              <Button
+                id="launch-button"
+                title="Launch"
+                containerClass="bg-blue-50 flex items-center cursor-pointer justify-center gap-1"
+                rightIcon={<PiPaperPlaneTiltLight />}
+                leftIcon={null}
+                onClick={() => {}}
+                disabled={false}
+              />
+            </NavLink>
           </div>
         </nav>
 
@@ -112,14 +119,15 @@ const Navbar = () => {
         >
           <div className="flex flex-col py-4 gap-4 w-full items-center">
             {navItems.map((item) => (
-              <a
+              <NavLink
+                to={item.route}
                 key={item.key}
                 className="nav-hover-btn cursor-pointer"
                 style={{ margin: "0px" }}
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 {item.text}
-              </a>
+              </NavLink>
             ))}
           </div>
         </div>

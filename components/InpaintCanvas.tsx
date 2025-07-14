@@ -14,6 +14,12 @@ export default function InpaintCanvas({
   const [isLoading, setIsLoading] = useState(false);
   const [lines, setLines] = useState<{ points: number[] }[]>([]);
   const [prompt, setPrompt] = useState("");
+  const [imageCount, setImageCount] = useState(1);
+  const [width, setWidth] = useState<number | undefined>();
+  const [height, setHeight] = useState<number | undefined>();
+  const [guidanceScale, setGuidanceScale] = useState<number | undefined>();
+  const [strength, setStrength] = useState<number | undefined>();
+
   const isDrawing = useRef(false);
   const imageRef = useRef<any>(null);
   const drawingLayerRef = useRef<any>(null);
@@ -66,9 +72,16 @@ export default function InpaintCanvas({
     return new Blob([ab], { type: mimeString });
   };
 
+  const handleCountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    try {
+      const value = Math.max(1, Math.min(4, Number(e.target.value)));
+      setImageCount(value);
+    } catch (error) {}
+  };
+
   const sendToBackend = async () => {
     if (!uploadedImage || !imageRef.current) return;
-    setIsLoading(true); // Start spinner
+    setIsLoading(true);
 
     imageLayerRef.current?.visible(false);
     const maskDataUrl = imageRef.current
@@ -92,6 +105,12 @@ export default function InpaintCanvas({
     formData.append("image", imageBlob, "image.png");
     formData.append("mask", maskBlob, "mask.png");
     formData.append("prompt", prompt);
+    if (imageCount) formData.append("image_count", imageCount.toString());
+    if (width) formData.append("width", width.toString());
+    if (height) formData.append("height", height.toString());
+    if (guidanceScale)
+      formData.append("guidance_scale", guidanceScale.toString());
+    if (strength) formData.append("strength", strength.toString());
 
     try {
       const response = await fetch(
@@ -106,12 +125,11 @@ export default function InpaintCanvas({
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-
       setResponseImage(url);
     } catch (err) {
       console.error("Upload failed:", err);
     } finally {
-      setIsLoading(false); // Stop spinner
+      setIsLoading(false);
     }
   };
 
@@ -135,7 +153,7 @@ export default function InpaintCanvas({
       {/* Canvas Container */}
       <div className="relative group">
         <div
-          className="relative overflow-hidden rounded-lg shadow-2xl border-2 border-white/20 transition-all duration-300 group-hover:border-white/40"
+          className="relative overflow-hidden rounded-lg border-2 border-white/20 transition-all duration-300 group-hover:border-white/40"
           style={{ width: containerWidth, height: containerHeight }}
         >
           <Stage
@@ -174,17 +192,6 @@ export default function InpaintCanvas({
             </Layer>
           </Stage>
         </div>
-
-        {/* Instructions Overlay */}
-        {lines.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="bg-black/70 backdrop-blur-sm rounded-lg px-6 py-4 text-center border border-white/20">
-              <p className="text-white text-lg font-medium">
-                ✨ Click and drag to paint areas you want to modify
-              </p>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Controls */}
@@ -198,6 +205,53 @@ export default function InpaintCanvas({
             placeholder="Describe what you want to see in the painted areas..."
             className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-lg"
           />
+        </div>
+        <div className="flex gap-2">
+          <input
+            max={4}
+            min={1}
+            type="number"
+            value={imageCount}
+            placeholder="Count"
+            onChange={handleCountChange}
+            className="w-1/4 px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+          />
+          {/* Width + Height */}
+          <div className="flex flex-col gap-2 w-1/2">
+            <input
+              type="number"
+              value={width || ""}
+              placeholder="Width (in px)"
+              onChange={(e) => setWidth(Number(e.target.value))}
+              className="px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+            <input
+              type="number"
+              value={height || ""}
+              placeholder="Height (in px)"
+              onChange={(e) => setHeight(Number(e.target.value))}
+              className="px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+          </div>
+
+          {/* Guidance Scale and Strength */}
+          <div className="flex flex-col gap-2 w-1/2">
+            <input
+              type="number"
+              value={guidanceScale || ""}
+              placeholder="Guidance Scale"
+              onChange={(e) => setGuidanceScale(Number(e.target.value))}
+              className="px-5 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+            <input
+              type="number"
+              step="0.1"
+              value={strength || ""}
+              placeholder="Strength"
+              onChange={(e) => setStrength(Number(e.target.value))}
+              className="px-5 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+          </div>
         </div>
 
         {/* Action Buttons */}

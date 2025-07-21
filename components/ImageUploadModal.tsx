@@ -20,6 +20,16 @@ const InpaintEditor: React.FC = () => {
   );
   const [responseImage, setResponseImage] = useState<string | null>(null);
   const [isDragOver, setIsDragOver] = useState<boolean>(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
+
+  const scrollToResults = () => {
+    setTimeout(() => {
+      resultsRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }, 300); // Small delay ensures DOM is updated
+  };
 
   const processFile = useCallback((file: File) => {
     if (!file || !file.type.startsWith("image/")) {
@@ -247,7 +257,10 @@ const InpaintEditor: React.FC = () => {
                     <div className="w-full flex items-center justify-center overflow-hidden">
                       <InpaintCanvas
                         uploadedImage={imageElement}
-                        setResponseImage={setResponseImage}
+                        setResponseImage={(url) => {
+                          setResponseImage(url);
+                          scrollToResults();
+                        }}
                       />
                     </div>
                   </motion.div>
@@ -258,6 +271,7 @@ const InpaintEditor: React.FC = () => {
 
           {/* Response Section */}
           <motion.section
+            ref={resultsRef}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.8 }}

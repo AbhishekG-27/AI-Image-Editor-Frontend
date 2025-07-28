@@ -222,93 +222,79 @@ export default function InpaintCanvas({
           />
         </div>
         <div className="flex gap-2">
-          <div className="flex flex-col w-1/4">
-            <input
-              type="number"
-              value={imageCount}
-              placeholder="Count"
-              onChange={handleCountChange}
-              className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-            <input
-              type="number"
-              value={numInferenceSteps}
-              placeholder="Inference Steps"
-              onChange={handleNumInferenceStepsChange}
-              className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-          </div>
           {/* Width + Height */}
           <div className="flex flex-col gap-2 w-1/2">
-        {/* More Options Toggle */}
-        <div className="w-full max-w-2xl">
-          <button
-            onClick={() => setShowOptions((prev) => !prev)}
-            className="flex items-center gap-2 text-lg font-semibold text-black focus:outline-none transition-colors duration-300"
-          >
-            <svg
-              className={`w-5 h-5 transition-transform duration-300 ${
-                showOptions ? "rotate-90" : "rotate-0"
-              }`}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M9 5l7 7-7 7"
-              />
-            </svg>
-            More Options
-          </button>
+            {/* More Options Toggle */}
+            <div className="w-full max-w-2xl">
+              <button
+                onClick={() => setShowOptions((prev) => !prev)}
+                className="flex items-center gap-2 text-lg font-semibold text-black focus:outline-none transition-colors duration-300"
+              >
+                <svg
+                  className={`w-5 h-5 transition-transform duration-300 ${
+                    showOptions ? "rotate-90" : "rotate-0"
+                  }`}
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 5l7 7-7 7"
+                  />
+                </svg>
+                More Options
+              </button>
 
-          <div
-            className={`grid transition-all duration-500 overflow-hidden ${
-              showOptions
-                ? "max-h-[800px] mt-4 opacity-100"
-                : "max-h-0 opacity-0"
-            } grid-cols-1 sm:grid-cols-2 gap-4 bg-white/5 border-2 border-white/20 rounded-lg shadow-lg p-4`}
-          >
-            <input
-              max={4}
-              min={1}
-              type="number"
-              value={imageCount}
-              placeholder="Image Count (1–4)"
-              onChange={handleCountChange}
-              className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-            <input
-              type="number"
-              value={width || ""}
-              placeholder="Width (in px)"
-              onChange={(e) => setWidth(Number(e.target.value))}
-              className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-            <input
-              type="number"
-              value={height || ""}
-              placeholder="Height (in px)"
-              onChange={(e) => setHeight(Number(e.target.value))}
-              className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-            <input
-              type="number"
-              value={guidanceScale || ""}
-              placeholder="Guidance Scale"
-              onChange={(e) => setGuidanceScale(Number(e.target.value))}
-              className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
-            <input
-              type="number"
-              step="0.1"
-              value={strength || ""}
-              placeholder="Strength"
-              onChange={(e) => setStrength(Number(e.target.value))}
-              className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
-            />
+              <div
+                className={`grid transition-all duration-500 overflow-hidden ${
+                  showOptions
+                    ? "max-h-[800px] mt-4 opacity-100"
+                    : "max-h-0 opacity-0"
+                } grid-cols-1 sm:grid-cols-2 gap-4 bg-white/5 border-2 border-white/20 rounded-lg shadow-lg p-4`}
+              >
+                <input
+                  max={4}
+                  min={1}
+                  type="number"
+                  value={imageCount}
+                  placeholder="Image Count (1–4)"
+                  onChange={handleCountChange}
+                  className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+                />
+                <input
+                  type="number"
+                  value={width || ""}
+                  placeholder="Width (in px)"
+                  onChange={(e) => setWidth(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+                />
+                <input
+                  type="number"
+                  value={height || ""}
+                  placeholder="Height (in px)"
+                  onChange={(e) => setHeight(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+                />
+                <input
+                  type="number"
+                  value={guidanceScale || ""}
+                  placeholder="Guidance Scale"
+                  onChange={(e) => setGuidanceScale(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+                />
+                <input
+                  type="number"
+                  step="0.1"
+                  value={strength || ""}
+                  placeholder="Strength"
+                  onChange={(e) => setStrength(Number(e.target.value))}
+                  className="w-full px-4 py-3 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+                />
+              </div>
+            </div>
           </div>
         </div>
 

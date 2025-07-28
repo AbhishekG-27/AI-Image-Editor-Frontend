@@ -19,6 +19,9 @@ export default function InpaintCanvas({
   const [height, setHeight] = useState<number | undefined>();
   const [guidanceScale, setGuidanceScale] = useState<number | undefined>();
   const [strength, setStrength] = useState<number | undefined>();
+  const [numInferenceSteps, setNumInferenceSteps] = useState<
+    number | undefined
+  >(30);
   const [showOptions, setShowOptions] = useState(false);
 
   const isDrawing = useRef(false);
@@ -80,6 +83,15 @@ export default function InpaintCanvas({
     } catch (error) {}
   };
 
+  const handleNumInferenceStepsChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    try {
+      const value = Math.max(1, Math.min(60, Number(e.target.value)));
+      setNumInferenceSteps(value);
+    } catch (error) {}
+  };
+
   const sendToBackend = async () => {
     if (!uploadedImage || !imageRef.current) return;
     setIsLoading(true);
@@ -112,6 +124,8 @@ export default function InpaintCanvas({
     if (guidanceScale)
       formData.append("guidance_scale", guidanceScale.toString());
     if (strength) formData.append("strength", strength.toString());
+    if (numInferenceSteps)
+      formData.append("num_inference_steps", numInferenceSteps.toString());
 
     try {
       const response = await fetch(
@@ -207,6 +221,25 @@ export default function InpaintCanvas({
             className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-lg"
           />
         </div>
+        <div className="flex gap-2">
+          <div className="flex flex-col w-1/4">
+            <input
+              type="number"
+              value={imageCount}
+              placeholder="Count"
+              onChange={handleCountChange}
+              className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+            <input
+              type="number"
+              value={numInferenceSteps}
+              placeholder="Inference Steps"
+              onChange={handleNumInferenceStepsChange}
+              className="w-full px-6 py-4 border-2 border-white/20 text-black placeholder-gray-400 rounded-lg shadow-lg focus:outline-none focus:border-white/40 transition-all duration-300 text-md"
+            />
+          </div>
+          {/* Width + Height */}
+          <div className="flex flex-col gap-2 w-1/2">
         {/* More Options Toggle */}
         <div className="w-full max-w-2xl">
           <button

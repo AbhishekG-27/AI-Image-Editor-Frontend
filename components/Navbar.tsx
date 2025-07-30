@@ -14,6 +14,7 @@ import {
   useUser,
 } from "@clerk/nextjs";
 import Link from "next/link";
+import DropDown from "./DropDown";
 
 const Navbar = () => {
   const { isLoaded, isSignedIn } = useUser();
@@ -102,7 +103,7 @@ const Navbar = () => {
 
           {/* Desktop Nav Items */}
           <div className="flex items-center gap-6">
-            <div className="hidden md:flex">
+            <div className="hidden md:flex items-center">
               {navItems.map((item) => (
                 <Link
                   href={item.route}
@@ -112,6 +113,7 @@ const Navbar = () => {
                   {item.text}
                 </Link>
               ))}
+              <DropDown />
             </div>
             <Link href="/image-editor">
               <Button

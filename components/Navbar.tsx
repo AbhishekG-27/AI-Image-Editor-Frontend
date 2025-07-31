@@ -69,7 +69,7 @@ const Navbar = () => {
       ref={navContainerRef}
       className={`fixed z-50 top-0 left-1/2 transform -translate-x-1/2 transition-all duration-200 ${
         isNavVisible ? "top-4 opacity-100" : "-top-24 opacity-0"
-      } w-[90vw] h-16`}
+      } w-[90%] h-16`}
     >
       <header className="absolute top-1/2 w-full -translate-y-1/2">
         <nav className="flex size-full items-center justify-between px-4 py-2 bg-neutral-950/80 backdrop-blur-md rounded-xl">

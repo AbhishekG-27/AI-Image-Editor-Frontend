@@ -2,14 +2,15 @@
 import { ModelSelector } from "@/components/ModelSelector";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
-  const [width, setWidth] = useState<number>(512);
-  const [height, setHeight] = useState<number>(512);
   const [imageCount, setImageCount] = useState<number>(1);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [imageDimension, setImageDimension] = useState("1:1");
+  const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
 
   const handleGenerate = async () => {
     setLoading(true);
@@ -43,55 +44,105 @@ export default function ImageGenerator() {
 
           <label className="text-sm mt-3">Image Dimensions</label>
           <div className="w-full flex gap-4">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              <div className="flex flex-col items-center justify-center w-full h-full">
-                <div className="border transition-colors border-white h-5 w-5"></div>
-                <span className="text-xs mt-1 text-white">1:1</span>
-              </div>
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              <div className="flex flex-col items-center justify-center w-full h-full">
-                <div className="border transition-colors border-white h-[11.25px] w-[20px]"></div>
-                <span className="text-xs mt-1 text-white">16:9</span>
-              </div>
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              <div className="flex flex-col items-center justify-center w-full h-full">
-                <div className="border transition-colors border-white h-[20px] w-[11.25px]"></div>
-                <span className="text-xs mt-1 text-white">9:16</span>
-              </div>
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              <div className="flex flex-col items-center justify-center w-full h-full">
-                <div className="border transition-colors border-white h-[13.3333px] w-[20px]"></div>
-                <span className="text-xs mt-1 text-white">3:2</span>
-              </div>
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              <div className="flex flex-col items-center justify-center w-full h-full">
-                <div className="border transition-colors border-white h-[20px] w-[13.3333px]"></div>
-                <span className="text-xs mt-1 text-white">2:3</span>
-              </div>
-            </label>
+            {["1:1", "16:9", "9:16", "3:2", "2:3"].map((dim) => (
+              <label
+                key={dim}
+                onClick={() => setImageDimension(dim)}
+                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white ${
+                  imageDimension === dim
+                    ? "bg-indigo-50 border-indigo-400"
+                    : "bg-white/10 hover:border-indigo-400"
+                }`}
+              >
+                <div className="flex flex-col items-center justify-center w-full h-full">
+                  <div
+                    className={`border transition-colors h-5 w-5 ${
+                      imageDimension == dim ? "border-black" : "border-white"
+                    }`}
+                  ></div>
+                  <span
+                    className={`text-xs mt-1 ${
+                      imageDimension === dim ? "text-black" : "text-white"
+                    }`}
+                  >
+                    {dim}
+                  </span>
+                </div>
+              </label>
+            ))}
           </div>
 
           <label className="text-sm">Number of Images</label>
           <div className="w-full flex gap-4">
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              1
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              2
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              3
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              4
-            </label>
-            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white bg-white/10 hover:border-indigo-400">
-              5
-            </label>
+            {[1, 2, 3, 4, 5].map((count) => (
+              <label
+                key={count}
+                onClick={() => setImageCount(count)}
+                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200
+        border-white 
+        ${
+          imageCount === count
+            ? "bg-indigo-50 border-indigo-400 text-black"
+            : "bg-white/10 hover:border-indigo-400"
+        }`}
+              >
+                {count}
+              </label>
+            ))}
+          </div>
+
+          {/* Advanced Options Toggle */}
+          <div className="mt-4">
+            <button
+              onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
+              className="text-sm font-semibold flex items-center justify-between w-full bg-white/10 hover:bg-white/20 transition-all px-4 py-2 rounded-lg"
+            >
+              Advanced Options
+              <span
+                className={`transform transition-transform ${
+                  isAdvancedOpen ? "rotate-90" : ""
+                }`}
+              >
+                ▶
+              </span>
+            </button>
+
+            <AnimatePresence>
+              {isAdvancedOpen && (
+                <motion.div
+                  key="advanced-options"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
+                  className="overflow-hidden"
+                >
+                  <div className="mt-4 flex flex-col gap-4 text-white">
+                    {/* Guidance Scale */}
+                    <label className="text-sm">Guidance Scale</label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={20}
+                      step={0.5}
+                      placeholder="7.5"
+                      className="bg-black border border-white/20 px-4 py-2 rounded-lg placeholder-gray-400"
+                    />
+
+                    {/* Strength */}
+                    <label className="text-sm">Strength</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={1}
+                      step={0.1}
+                      placeholder="0.8"
+                      className="bg-black border border-white/20 px-4 py-2 rounded-lg placeholder-gray-400"
+                    />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <Button

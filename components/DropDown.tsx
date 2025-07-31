@@ -31,7 +31,7 @@ const DropDown = () => {
         )}
       </DropdownMenuTrigger>
       <DropdownMenuContent>
-        <Link href="/image-generator">
+        <Link href="/image-generation">
           <DropdownMenuItem>Image Generation</DropdownMenuItem>
         </Link>
         <Link href="/image-editor">

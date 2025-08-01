@@ -15,7 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useState } from "react";
-import { FaArrowDown } from "react-icons/fa";
+import { ChevronDownIcon } from "lucide-react";
 
 export function ModelSelector() {
   const [selectedModel, setselectedModel] = useState("Flux");
@@ -28,10 +28,10 @@ export function ModelSelector() {
           className="text-black cursor-pointer flex justify-between items-center"
         >
           {selectedModel}
-          <span>{<FaArrowDown />}</span>
+          <ChevronDownIcon className="w-4 h-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-70" align="start">
+      <DropdownMenuContent className="w-100" align="start">
         <DropdownMenuGroup>
           <DropdownMenuItem
             onSelect={(e) => {

@@ -3,7 +3,8 @@ import { ModelSelector } from "@/components/ModelSelector";
 import { Button } from "@/components/ui/button";
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, DownloadIcon } from "lucide-react";
+import JSZip from "jszip";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -15,6 +16,7 @@ export default function ImageGenerator() {
   const [guidanceScale, setGuidanceScale] = useState(7.5);
   const [numInferenceSteps, setNumInferenceSteps] = useState(30);
   const [showSensitiveContent, setShowSensitiveContent] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
 
   // A simple spinner component for loading states
   const Loader = () => (
@@ -34,7 +36,10 @@ export default function ImageGenerator() {
     if (numInferenceSteps)
       formData.append("num_inference_steps", numInferenceSteps.toString());
     if (showSensitiveContent)
-      formData.append("show_sensitive_content", showSensitiveContent.toString());
+      formData.append(
+        "show_sensitive_content",
+        showSensitiveContent.toString()
+      );
 
     try {
       const response = await fetch(
@@ -91,6 +96,66 @@ export default function ImageGenerator() {
     setNumInferenceSteps(numValue);
   };
 
+  const downloadAllImages = async () => {
+    setIsDownloading(true);
+    if (generatedImages.length === 0) {
+      setIsDownloading(false);
+      return;
+    }
+    if (generatedImages.length === 1) {
+      const imageSrc = generatedImages[0];
+      // Create a temporary link element
+      const link = document.createElement("a");
+      link.href = imageSrc;
+      link.download = `generated-image-1.png`;
+
+      // Append to body, click, and remove
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setIsDownloading(false);
+      return;
+    }
+
+    // 1. Create a new JSZip instance
+    const zip = new JSZip();
+    // 2. Loop through each image source (which are data URLs)
+    generatedImages.forEach((imageSrc, index) => {
+      // Extract the Base64 data from the data URL
+      const base64Data = imageSrc.split(",")[1];
+
+      // Add the image file to the zip, telling JSZip it's Base64 encoded
+      zip.file(`generated-image-${index + 1}.png`, base64Data, {
+        base64: true,
+      });
+    });
+    // 3. Generate the zip file as a blob
+    const zipBlob = await zip.generateAsync({ type: "blob" });
+
+    // 4. Create a temporary link to download the zip file
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(zipBlob);
+    link.download = "generated-images.zip"; // The name of the downloaded zip file
+    // Append to body, click, and remove
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Clean up the created object URL
+    URL.revokeObjectURL(link.href);
+    setIsDownloading(false);
+  };
+
+  const downloadSingleImage = (imageSrc: string, index: number) => {
+    const link = document.createElement("a");
+    link.href = imageSrc;
+    link.download = `generated-image-${index + 1}.png`;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="w-full bg-black min-h-screen">
       <div className="flex flex-col md:flex-row text-white bg-black p-6 gap-6 w-[90%] mx-auto">
@@ -116,12 +181,12 @@ export default function ImageGenerator() {
             <button
               onClick={() => setShowSensitiveContent(!showSensitiveContent)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                showSensitiveContent ? 'bg-indigo-600' : 'bg-gray-600'
+                showSensitiveContent ? "bg-indigo-600" : "bg-gray-600"
               }`}
             >
               <span
                 className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                  showSensitiveContent ? 'translate-x-6' : 'translate-x-1'
+                  showSensitiveContent ? "translate-x-6" : "translate-x-1"
                 }`}
               />
             </button>
@@ -269,22 +334,71 @@ export default function ImageGenerator() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <motion.div
+            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5 }}
+          >
             {generatedImages.map((src, index) => (
-              <div key={index} className="flex flex-col items-center">
-                <img
-                  src={src}
-                  alt={`Generated ${index}`}
-                  className="max-w-full h-auto rounded-lg border border-white/10 object-contain"
-                  style={{
-                    maxHeight: "400px",
-                    width: "auto",
+              <motion.div
+                key={index}
+                className="flex flex-col items-center relative group"
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{
+                  duration: 0.6,
+                  delay: index * 0.2,
+                  ease: "easeOut",
+                }}
+                whileHover={{
+                  scale: 1.05,
+                  transition: { duration: 0.2 },
+                }}
+              >
+                <div className="relative">
+                  <motion.img
+                    src={src}
+                    alt={`Generated ${index}`}
+                    className="max-w-full h-auto rounded-lg border border-white/10 object-contain"
+                    style={{
+                      maxHeight: "400px",
+                      width: "auto",
+                    }}
+                    initial={{ filter: "blur(10px)" }}
+                    animate={{ filter: "blur(0px)" }}
+                    transition={{
+                      duration: 0.8,
+                      delay: index * 0.2 + 0.3,
+                    }}
+                  />
+                  <motion.div
+                    className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    whileHover={{ scale: 1.1 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <button
+                      onClick={() => downloadSingleImage(src, index)}
+                      className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors duration-200 cursor-pointer"
+                    >
+                      <DownloadIcon className="w-6 h-6 text-white" />
+                    </button>
+                  </motion.div>
+                </div>
+                <motion.p
+                  className="text-xs text-gray-400 mt-2"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.4,
+                    delay: index * 0.2 + 0.5,
                   }}
-                />
-                <p className="text-xs text-gray-400 mt-2">Image {index + 1}</p>
-              </div>
+                >
+                  Image {index + 1}
+                </motion.p>
+              </motion.div>
             ))}
-          </div>
+          </motion.div>
           {generatedImages.length > 0 && (
             <div className="flex justify-center items-center gap-5 mt-4">
               <Button
@@ -299,10 +413,19 @@ export default function ImageGenerator() {
               </Button>
               <Button
                 variant="outline"
-                onClick={() => setGeneratedImages([])}
+                onClick={downloadAllImages}
+                disabled={isDownloading}
                 className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
               >
-                Download
+                {isDownloading
+                  ? "Downloading..."
+                  : generatedImages.length > 1
+                  ? "Download All Images"
+                  : "Download Image"}
+                <DownloadIcon className="w-4 h-4" />
+                {generatedImages.length > 1 && (
+                  <span className="text-xs text-gray-400">(.zip)</span>
+                )}
               </Button>
             </div>
           )}

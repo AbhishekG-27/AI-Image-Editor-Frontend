@@ -13,8 +13,8 @@ export default function ImageGenerator() {
   const [imageDimension, setImageDimension] = useState("1:1");
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [guidanceScale, setGuidanceScale] = useState(7.5);
-  const [strength, setStrength] = useState(0.8);
   const [numInferenceSteps, setNumInferenceSteps] = useState(30);
+  const [showSensitiveContent, setShowSensitiveContent] = useState(false);
 
   // A simple spinner component for loading states
   const Loader = () => (
@@ -31,9 +31,10 @@ export default function ImageGenerator() {
     if (imageDimension) formData.append("image_dimension", imageDimension);
     if (guidanceScale)
       formData.append("guidance_scale", guidanceScale.toString());
-    if (strength) formData.append("strength", strength.toString());
     if (numInferenceSteps)
       formData.append("num_inference_steps", numInferenceSteps.toString());
+    if (showSensitiveContent)
+      formData.append("show_sensitive_content", showSensitiveContent.toString());
 
     try {
       const response = await fetch(
@@ -46,11 +47,18 @@ export default function ImageGenerator() {
 
       if (!response.ok) throw new Error("Server error");
 
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      // setResponseImage(url);
+      const data = await response.json();
+      if (data && data.images_base64 && Array.isArray(data.images_base64)) {
+        setGeneratedImages(
+          data.images_base64.map(
+            (b64: string) => `data:image/png;base64,${b64}`
+          )
+        );
+      } else {
+        setGeneratedImages([]);
+      }
     } catch (err) {
-      console.error("Upload failed:", err);
+      console.error("Generation failed:", err);
     } finally {
       setLoading(false);
     }
@@ -67,19 +75,6 @@ export default function ImageGenerator() {
     if (numValue > 20) numValue = 20;
     if (numValue < 1) numValue = 1;
     setGuidanceScale(numValue);
-  };
-
-  // Handler to enforce the min/max for the Strength input
-  const handleStrengthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value;
-    if (value === "") {
-      setStrength(0);
-      return;
-    }
-    let numValue = parseFloat(value);
-    if (numValue > 1) numValue = 1;
-    if (numValue < 0) numValue = 0;
-    setStrength(numValue);
   };
 
   const handleNumInferenceStepsChange = (
@@ -114,6 +109,22 @@ export default function ImageGenerator() {
           <div className="flex w-full flex-col gap-2">
             <label className="text-sm">Image model</label>
             <ModelSelector />
+          </div>
+
+          <div className="flex items-center justify-between w-full">
+            <label className="text-sm">Show Sensitive Content</label>
+            <button
+              onClick={() => setShowSensitiveContent(!showSensitiveContent)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
+                showSensitiveContent ? 'bg-indigo-600' : 'bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  showSensitiveContent ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
 
           <label className="text-sm mt-3">Image Dimensions</label>
@@ -218,21 +229,6 @@ export default function ImageGenerator() {
                     />
 
                     <label className="text-sm">
-                      Strength{" "}
-                      <span className="text-xs text-gray-400">
-                        (range: 0-1)
-                      </span>
-                    </label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      value={strength}
-                      onChange={handleStrengthChange}
-                      className="bg-black border border-white/20 px-4 py-2 rounded-lg placeholder-gray-400"
-                    />
-                    <label className="text-sm">
                       Number of Inference Steps{" "}
                       <span className="text-xs text-gray-400">
                         (range: 20-50)
@@ -256,7 +252,7 @@ export default function ImageGenerator() {
           <Button
             variant="outline"
             onClick={handleGenerate}
-            disabled={loading}
+            disabled={loading || !prompt}
             size="lg"
             className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
           >
@@ -275,14 +271,41 @@ export default function ImageGenerator() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {generatedImages.map((src, index) => (
-              <img
-                key={index}
-                src={src}
-                alt={`Generated ${index}`}
-                className="w-full rounded-lg border border-white/10"
-              />
+              <div key={index} className="flex flex-col items-center">
+                <img
+                  src={src}
+                  alt={`Generated ${index}`}
+                  className="max-w-full h-auto rounded-lg border border-white/10 object-contain"
+                  style={{
+                    maxHeight: "400px",
+                    width: "auto",
+                  }}
+                />
+                <p className="text-xs text-gray-400 mt-2">Image {index + 1}</p>
+              </div>
             ))}
           </div>
+          {generatedImages.length > 0 && (
+            <div className="flex justify-center items-center gap-5 mt-4">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setGeneratedImages([]);
+                  setPrompt("");
+                }}
+                className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
+              >
+                Clear
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setGeneratedImages([])}
+                className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
+              >
+                Download
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

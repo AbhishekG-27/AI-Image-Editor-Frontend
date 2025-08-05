@@ -4,20 +4,10 @@ import { useWindowScroll } from "react-use";
 import { PiPaperPlaneTiltLight } from "react-icons/pi";
 import { IoMenu, IoClose } from "react-icons/io5";
 import Button from "./Button";
-import {
-  ClerkProvider,
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-  useUser,
-} from "@clerk/nextjs";
 import Link from "next/link";
 import DropDown from "./DropDown";
 
 const Navbar = () => {
-  const { isLoaded, isSignedIn } = useUser();
   const navItems = [
     { text: "Home", key: "home", route: "/" },
     { text: "Pricing", key: "nav-item2", route: "/pricing" },
@@ -62,8 +52,6 @@ const Navbar = () => {
     return () => document.body.classList.remove("overflow-hidden");
   }, [isMobileMenuOpen]);
 
-  if (!isLoaded) return;
-
   return (
     <div
       ref={navContainerRef}
@@ -75,21 +63,17 @@ const Navbar = () => {
         <nav className="flex size-full items-center justify-between px-4 py-2 bg-neutral-950/80 backdrop-blur-md rounded-xl">
           {/* Left side */}
           <div className="flex items-center gap-4">
-            {isSignedIn ? (
-              <UserButton />
-            ) : (
-              <Link href="/sign-in">
-                <Button
-                  id="login-button"
-                  rightIcon={<PiPaperPlaneTiltLight />}
-                  title="Login"
-                  containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
-                  leftIcon={null}
-                  onClick={() => {}}
-                  disabled={false}
-                />
-              </Link>
-            )}
+            <Link href="/sign-in">
+              <Button
+                id="login-button"
+                rightIcon={<PiPaperPlaneTiltLight />}
+                title="Login"
+                containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
+                leftIcon={null}
+                onClick={() => {}}
+                disabled={false}
+              />
+            </Link>
             {/* Mobile toggle */}
             <div className="md:hidden">
               <button

@@ -171,10 +171,10 @@ export default function ImageGenerator() {
             className="bg-black border border-white/20 p-3 rounded-lg resize-none h-24 placeholder-gray-400"
           />
 
-          <div className="flex w-full flex-col gap-2">
+          {/* <div className="flex w-full flex-col gap-2">
             <label className="text-sm">Image model</label>
             <ModelSelector />
-          </div>
+          </div> */}
 
           <div className="flex items-center justify-between w-full">
             <label className="text-sm">Show Sensitive Content</label>

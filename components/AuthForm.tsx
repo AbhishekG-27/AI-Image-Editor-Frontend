@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -7,13 +7,14 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { createAccount } from "@/lib/actions/user.actions";
 
 type AuthTypes = "sign-in" | "sign-up";
 
 const formSchema = (authType: AuthTypes) => {
   return z.object({
     // Use the standard z.string().email() for validation
-    email: z.string().email("Please enter a valid email address"),
+    email: z.email("Please enter a valid email address"),
     password: z.string().min(8, "Password must be at least 8 characters long"),
     firstName:
       authType === "sign-up"
@@ -27,6 +28,9 @@ const formSchema = (authType: AuthTypes) => {
 };
 
 export default function AuthForm({ type }: { type: AuthTypes }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState(null);
+
   const authFormSchema = formSchema(type);
 
   // 1. Define your form and get access to formState.errors
@@ -35,8 +39,8 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
     defaultValues: {
       email: "",
       password: "",
-      firstName: "", // Can safely default to "" for both cases
-      lastName: "", // Can safely default to "" for both cases
+      firstName: "",
+      lastName: "",
     },
   });
 
@@ -48,10 +52,25 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
   // 2. Define a submit handler.
   // Corrected the type inference here
   const onSubmit = async (values: z.infer<typeof authFormSchema>) => {
-    // Your submission logic goes here
-    // e.g., calling an API endpoint
-    console.log("Form submitted successfully:", values);
+    setIsLoading(true);
+    try {
+      if (type === "sign-up") {
+        const { firstName, lastName, email, password } = values;
+        const user = await createAccount({
+          firstName: firstName || "",
+          lastName: lastName || "",
+          email: email || "",
+        });
+        setUserId(user.accountId);
+      }
+    } catch (error) {
+      console.error("Error during form submission:", error);
+      // Handle error appropriately, e.g., show a notification
+    } finally {
+      setIsLoading(false);
+    }
   };
+
   return (
     <div className="shadow-input mx-auto w-full max-w-md rounded-none bg-white p-4 md:rounded-2xl md:p-8 dark:bg-black">
       <h2 className="text-xl font-bold text-neutral-800 dark:text-neutral-200">
@@ -130,10 +149,34 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
         </LabelInputContainer>
 
         <button
-          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset]"
+          className="group/btn relative block h-10 w-full rounded-md bg-gradient-to-br from-black to-neutral-600 font-medium text-white shadow-[0px_1px_0px_0px_#ffffff40_inset,0px_-1px_0px_0px_#ffffff40_inset] dark:bg-zinc-800 dark:from-zinc-900 dark:to-zinc-900 dark:shadow-[0px_1px_0px_0px_#27272a_inset,0px_-1px_0px_0px_#27272a_inset] cursor-pointer"
           type="submit"
+          disabled={isLoading}
         >
-          {type === "sign-up" ? "Sign up" : "Sign in"} &rarr;
+          {type === "sign-up" ? "Sign up" : "Sign in"}
+          {isLoading && (
+            <svg
+              className="ml-2 inline h-4 w-4 animate-spin text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          )}
+          {!isLoading && " →"}
           <BottomGradient />
         </button>
 

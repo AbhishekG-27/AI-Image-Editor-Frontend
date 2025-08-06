@@ -17,10 +17,13 @@ const getUserByEmail = async (email: string) => {
   return result.total > 0 ? result.documents[0] : null;
 };
 
-const sendEmailAuthenticationCode = async (email: string) => {
+const sendEmailAuthenticationCode = async (
+  accountId: string,
+  email: string
+) => {
   const { account } = await createAdminClient();
   try {
-    const session = await account.createEmailToken(ID.unique(), email);
+    const session = await account.createEmailToken(accountId, email);
     return session.userId;
   } catch (error) {
     console.error("Error fetching account ID:", error);
@@ -38,11 +41,11 @@ export const createAccount = async ({
   email: string;
 }) => {
   const isExistingUser = await getUserByEmail(email);
-  const accountId = await sendEmailAuthenticationCode(email);
-  if (!accountId) {
-    throw new Error("Account ID not found for existing user");
-  }
-  if (!isExistingUser) {
+  if (isExistingUser) {
+    throw new Error("User already exists. Please SignIn.");
+  } else {
+    const accountId: string = ID.unique();
+    await sendEmailAuthenticationCode(accountId, email);
     const { databases } = await createAdminClient();
     await databases.createDocument(
       appwriteConfig.databaseId,
@@ -56,7 +59,6 @@ export const createAccount = async ({
         accountId,
       }
     );
+    return parseStringify({ accountId });
   }
-
-  return parseStringify({ accountId });
 };

@@ -50,6 +50,23 @@ export const sendEmailAuthenticationCode = async (
   }
 };
 
+export const getAccount = async (email: string) => {
+  const isExistingUser = await getUserByEmail(email);
+  if (isExistingUser) {
+    await sendEmailAuthenticationCode(isExistingUser.accountId, email);
+    return parseStringify({
+      accountId: isExistingUser.accountId,
+      redirect: false,
+    });
+  } else {
+    return parseStringify({
+      accountId: null,
+      redirect: true,
+      message: "User does not exist",
+    });
+  }
+};
+
 export const createAccount = async ({
   firstName,
   lastName,
@@ -61,7 +78,7 @@ export const createAccount = async ({
 }) => {
   const isExistingUser = await getUserByEmail(email);
   if (isExistingUser) {
-    throw new Error("User already exists. Please SignIn.");
+    return parseStringify({ redirect: true, message: "User already exists" });
   } else {
     const accountId: string = ID.unique();
     await sendEmailAuthenticationCode(accountId, email);
@@ -78,6 +95,10 @@ export const createAccount = async ({
         accountId,
       }
     );
-    return parseStringify({ accountId });
+    return parseStringify({
+      accountId,
+      message: "Account created successfully",
+      redirect: false,
+    });
   }
 };

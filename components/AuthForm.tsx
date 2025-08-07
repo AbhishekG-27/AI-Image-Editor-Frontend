@@ -7,7 +7,7 @@ import Link from "next/link";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { createAccount } from "@/lib/actions/user.actions";
+import { createAccount, getAccount } from "@/lib/actions/user.actions";
 import OtpModal from "./OtpModal";
 import Image from "next/image";
 
@@ -17,7 +17,6 @@ const formSchema = (authType: AuthTypes) => {
   return z.object({
     // Use the standard z.string().email() for validation
     email: z.email("Please enter a valid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters long"),
     firstName:
       authType === "sign-up"
         ? z.string().min(2, "First name is required")
@@ -40,7 +39,6 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
     resolver: zodResolver(authFormSchema),
     defaultValues: {
       email: "",
-      password: "",
       firstName: "",
       lastName: "",
     },
@@ -57,13 +55,28 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
     setIsLoading(true);
     try {
       if (type === "sign-up") {
-        const { firstName, lastName, email, password } = values;
+        const { firstName, lastName, email } = values;
         const user = await createAccount({
           firstName: firstName || "",
           lastName: lastName || "",
           email: email || "",
         });
-        setUserId(user.accountId);
+        if (user.redirect) {
+          // User already exists, handle redirection
+          console.error(user.message);
+        } else {
+          setUserId(user.accountId);
+        }
+      } else if (type === "sign-in") {
+        // Handle sign-in logic here
+        const { email } = values;
+        const user = await getAccount(email);
+        if (user.accountId) {
+          setUserId(user.accountId);
+        } else {
+          // Handle case where user does not exist
+          console.error("User does not exist");
+        }
       }
     } catch (error) {
       console.error("Error during form submission:", error);
@@ -131,22 +144,6 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
           {/* 3. Display the error message */}
           {errors.email && (
             <p className="mt-1 text-sm text-red-500">{errors.email.message}</p>
-          )}
-        </LabelInputContainer>
-        <LabelInputContainer className="mb-4">
-          <Label htmlFor="password">Password</Label>
-          {/* 2. Register the input */}
-          <Input
-            id="password"
-            placeholder="••••••••"
-            type="password"
-            {...form.register("password")}
-          />
-          {/* 3. Display the error message */}
-          {errors.password && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.password.message}
-            </p>
           )}
         </LabelInputContainer>
 

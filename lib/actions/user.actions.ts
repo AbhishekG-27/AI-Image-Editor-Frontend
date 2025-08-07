@@ -17,7 +17,26 @@ const getUserByEmail = async (email: string) => {
   return result.total > 0 ? result.documents[0] : null;
 };
 
-const sendEmailAuthenticationCode = async (
+export const verifySecret = async ({
+  accountId,
+  password,
+}: {
+  accountId: string;
+  password: string;
+}) => {
+  const { account } = await createAdminClient();
+
+  try {
+    // Create a session using the accountId and OTP code
+    const session = await account.createSession(accountId, password);
+    return parseStringify({ sessionId: session.$id });
+  } catch (error) {
+    console.error("Error verifying OTP:", error);
+    throw new Error("Invalid verification code");
+  }
+};
+
+export const sendEmailAuthenticationCode = async (
   accountId: string,
   email: string
 ) => {

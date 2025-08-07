@@ -11,8 +11,6 @@ import {
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
@@ -21,6 +19,10 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp";
 import { Button } from "@/components/ui/button";
+import {
+  sendEmailAuthenticationCode,
+  verifySecret,
+} from "@/lib/actions/user.actions";
 
 const OtpModal = ({
   accountId,
@@ -44,8 +46,8 @@ const OtpModal = ({
 
     try {
       console.log({ accountId, password });
-      // const sessionId = await verifySecret({ accountId, password });
-      // if (sessionId) router.push("/");
+      const sessionId = await verifySecret({ accountId, password });
+      if (sessionId) router.push("/");
     } catch (error) {
       console.error("Failed to verify OTP", error);
     } finally {
@@ -54,7 +56,7 @@ const OtpModal = ({
   };
 
   const handleResendOtp = async () => {
-    // await sendEmailOTP({ email });
+    await sendEmailAuthenticationCode(accountId, email);
   };
 
   return (

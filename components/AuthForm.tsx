@@ -8,6 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { createAccount } from "@/lib/actions/user.actions";
+import OtpModal from "./OtpModal";
 
 type AuthTypes = "sign-in" | "sign-up";
 
@@ -195,6 +196,9 @@ export default function AuthForm({ type }: { type: AuthTypes }) {
           </Link>
         </div>
       </form>
+      {userId && (
+        <OtpModal accountId={userId} email={"gargabhishek1255@gmail.com"} />
+      )}
     </div>
   );
 }

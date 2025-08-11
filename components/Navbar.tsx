@@ -6,6 +6,7 @@ import { IoMenu, IoClose } from "react-icons/io5";
 import Button from "./Button";
 import Link from "next/link";
 import DropDown from "./DropDown";
+import { getCurrentSession } from "@/lib/actions/user.actions";
 
 const Navbar = () => {
   const navItems = [
@@ -20,9 +21,21 @@ const Navbar = () => {
   const lastScrollY = useRef(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
+  };
+
+  const getCurrentUser = async () => {
+    try {
+      const user = await getCurrentSession();
+      if (!user) return;
+      setCurrentUser(user);
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      return null;
+    }
   };
 
   useEffect(() => {
@@ -52,6 +65,10 @@ const Navbar = () => {
     return () => document.body.classList.remove("overflow-hidden");
   }, [isMobileMenuOpen]);
 
+  useEffect(() => {
+    getCurrentUser();
+  }, []);
+
   return (
     <div
       ref={navContainerRef}
@@ -63,17 +80,31 @@ const Navbar = () => {
         <nav className="flex size-full items-center justify-between px-4 py-2 bg-neutral-950/80 backdrop-blur-md rounded-xl">
           {/* Left side */}
           <div className="flex items-center gap-4">
-            <Link href="/sign-in">
-              <Button
-                id="login-button"
-                rightIcon={<PiPaperPlaneTiltLight />}
-                title="Login"
-                containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
-                leftIcon={null}
-                onClick={() => {}}
-                disabled={false}
-              />
-            </Link>
+            {currentUser === null ? (
+              <Link href="/sign-in">
+                <Button
+                  id="login-button"
+                  rightIcon={<PiPaperPlaneTiltLight />}
+                  title="Login"
+                  containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
+                  leftIcon={null}
+                  onClick={() => {}}
+                  disabled={false}
+                />
+              </Link>
+            ) : (
+              <Link href="/profile">
+                <Button
+                  id="profile-button"
+                  title="Profile"
+                  containerClass="bg-blue-50 md:flex hidden items-center cursor-pointer justify-center gap-1"
+                  rightIcon={<PiPaperPlaneTiltLight />}
+                  leftIcon={null}
+                  onClick={() => {}}
+                  disabled={false}
+                />
+              </Link>
+            )}
             {/* Mobile toggle */}
             <div className="md:hidden">
               <button

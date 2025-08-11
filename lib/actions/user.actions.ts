@@ -1,9 +1,27 @@
 "use server";
 
 import { ID, Query } from "node-appwrite";
-import { createAdminClient } from "../appwrite";
+import { createAdminClient, createSessionClient } from "../appwrite";
 import { appwriteConfig } from "../appwrite/config";
 import { parseStringify } from "../utils";
+import { cookies } from "next/headers";
+
+export const getCurrentSession = async () => {
+  const { account, databases } = await createSessionClient();
+  try {
+    const result = await account.get();
+    const user = await databases.listDocuments(
+      appwriteConfig.databaseId,
+      appwriteConfig.usersCollectionId,
+      [Query.equal("accountId", [result.$id])]
+    );
+    if (user.total <= 0) return null;
+    return parseStringify(user.documents[0]);
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    return null;
+  }
+};
 
 const getUserByEmail = async (email: string) => {
   const { databases } = await createAdminClient();
@@ -29,6 +47,12 @@ export const verifySecret = async ({
   try {
     // Create a session using the accountId and OTP code
     const session = await account.createSession(accountId, password);
+    (await cookies()).set("appwrite-session", session.secret, {
+      path: "/",
+      httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+    });
     return parseStringify({ sessionId: session.$id });
   } catch (error) {
     console.error("Error verifying OTP:", error);

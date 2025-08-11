@@ -45,7 +45,6 @@ const OtpModal = ({
     setIsLoading(true);
 
     try {
-      console.log({ accountId, password });
       const sessionId = await verifySecret({ accountId, password });
       if (sessionId) router.push("/");
     } catch (error) {

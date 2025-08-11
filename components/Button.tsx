@@ -26,7 +26,7 @@ const Button = ({
       onClick={onClick}
       disabled={disabled}
       className={clsx(
-        "group relative z-10 w-fit overflow-hidden rounded-full bg-violet-50 px-7 py-3 text-black flex items-center justify-center",
+        "group relative z-10 w-fit overflow-hidden rounded-full px-7 py-3 text-black flex items-center justify-center",
         containerClass
       )}
     >

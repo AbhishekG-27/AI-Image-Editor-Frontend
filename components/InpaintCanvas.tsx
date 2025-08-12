@@ -130,13 +130,10 @@ export default function InpaintCanvas({
       formData.append("num_inference_steps", numInferenceSteps.toString());
 
     try {
-      const response = await fetch(
-        "https://subtle-prepared-vulture.ngrok-free.app/inpaint",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${process.env.BACKEND_URL!}/inpaint`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) throw new Error("Server error");
 

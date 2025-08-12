@@ -48,13 +48,10 @@ export default function ImageGenerator() {
     }
 
     try {
-      const response = await fetch(
-        "https://subtle-prepared-vulture.ngrok-free.app/generate",
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch(`${process.env.BACKEND_URL!}/generate`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!response.ok) throw new Error("Server error");
 

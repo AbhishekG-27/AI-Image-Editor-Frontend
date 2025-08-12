@@ -7,6 +7,7 @@ import JSZip from "jszip";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
+  const [negativePrompt, setNegativePrompt] = useState("");
   const [imageCount, setImageCount] = useState<number>(1);
   const [generatedImages, setGeneratedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
@@ -17,9 +18,9 @@ export default function ImageGenerator() {
   const [showSensitiveContent, setShowSensitiveContent] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  // A simple spinner component for loading states
+  // Enhanced spinner component with black and white theme
   const Loader = () => (
-    <div className="w-6 h-6 border-4 border-t-transparent border-white rounded-full animate-spin"></div>
+    <div className="w-6 h-6 border-4 border-t-transparent border-black rounded-full animate-spin"></div>
   );
 
   const handleGenerate = async () => {
@@ -28,17 +29,23 @@ export default function ImageGenerator() {
 
     const formData = new FormData();
     formData.append("prompt", prompt);
+    if (negativePrompt) formData.append("negative_prompt", negativePrompt);
     if (imageCount) formData.append("image_count", imageCount.toString());
     if (imageDimension) formData.append("image_dimension", imageDimension);
     if (guidanceScale)
       formData.append("guidance_scale", guidanceScale.toString());
     if (numInferenceSteps)
       formData.append("num_inference_steps", numInferenceSteps.toString());
-    if (showSensitiveContent)
-      formData.append(
-        "show_sensitive_content",
-        showSensitiveContent.toString()
-      );
+    if (negativePrompt) {
+      if (showSensitiveContent) {
+        formData.append("negative_prompt", negativePrompt);
+      } else {
+        formData.append(
+          "negative_prompt",
+          `NSFW, adult content, sensitive content ${negativePrompt}`
+        );
+      }
+    }
 
     try {
       const response = await fetch(
@@ -103,12 +110,10 @@ export default function ImageGenerator() {
     }
     if (generatedImages.length === 1) {
       const imageSrc = generatedImages[0];
-      // Create a temporary link element
       const link = document.createElement("a");
       link.href = imageSrc;
       link.download = `generated-image-1.png`;
 
-      // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -116,31 +121,22 @@ export default function ImageGenerator() {
       return;
     }
 
-    // 1. Create a new JSZip instance
     const zip = new JSZip();
-    // 2. Loop through each image source (which are data URLs)
     generatedImages.forEach((imageSrc, index) => {
-      // Extract the Base64 data from the data URL
       const base64Data = imageSrc.split(",")[1];
-
-      // Add the image file to the zip, telling JSZip it's Base64 encoded
       zip.file(`generated-image-${index + 1}.png`, base64Data, {
         base64: true,
       });
     });
-    // 3. Generate the zip file as a blob
     const zipBlob = await zip.generateAsync({ type: "blob" });
 
-    // 4. Create a temporary link to download the zip file
     const link = document.createElement("a");
     link.href = URL.createObjectURL(zipBlob);
-    link.download = "generated-images.zip"; // The name of the downloaded zip file
-    // Append to body, click, and remove
+    link.download = "generated-images.zip";
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
 
-    // Clean up the created object URL
     URL.revokeObjectURL(link.href);
     setIsDownloading(false);
   };
@@ -156,31 +152,58 @@ export default function ImageGenerator() {
   };
 
   return (
-    <div className="w-full bg-black min-h-screen">
-      <div className="flex flex-col md:flex-row text-white bg-black p-6 gap-6 w-[90%] mx-auto">
+    <div className="w-full bg-white min-h-screen">
+      {/* Page Header */}
+      <div className="pt-24 pb-8 text-center">
+        <motion.h1
+          className="text-3xl md:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-900 via-black to-gray-800 bg-clip-text text-transparent my-5"
+          initial={{ opacity: 0, y: -30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          AI Image Generator
+        </motion.h1>
+        <motion.p
+          className="text-lg text-gray-600 max-w-2xl mx-auto"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
+          Transform your ideas into stunning visuals with our advanced AI
+          technology
+        </motion.p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row text-black bg-white p-6 gap-8 max-w-7xl mx-auto">
         {/* Left Panel */}
-        <div className="md:w-[30%] bg-white/5 rounded-2xl p-6 shadow-xl flex flex-col gap-4 mt-20">
-          <h2 className="text-2xl font-bold mb-2">Image Generation Panel</h2>
+        <motion.div
+          className="lg:w-[35%] bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 flex flex-col gap-6"
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, ease: "easeOut" }}
+        >
+          <h2 className="text-2xl font-bold mb-2 text-black">
+            Generation Settings
+          </h2>
 
-          <label className="text-sm">Prompt</label>
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Enter your prompt..."
-            className="bg-black border border-white/20 p-3 rounded-lg resize-none h-24 placeholder-gray-400"
-          />
-
-          {/* <div className="flex w-full flex-col gap-2">
-            <label className="text-sm">Image model</label>
-            <ModelSelector />
-          </div> */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Prompt</label>
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder="Enter your prompt..."
+              className="w-full bg-gray-50 border-2 border-gray-200 focus:border-black p-4 rounded-xl resize-none h-24 placeholder-gray-400 transition-all duration-200 focus:outline-none"
+            />
+          </div>
 
           <div className="flex items-center justify-between w-full">
-            <label className="text-sm">Show Sensitive Content</label>
+            <label className="text-sm font-medium text-gray-700">
+              Show Sensitive Content
+            </label>
             <button
               onClick={() => setShowSensitiveContent(!showSensitiveContent)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${
-                showSensitiveContent ? "bg-indigo-600" : "bg-gray-600"
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-black focus:ring-offset-2 ${
+                showSensitiveContent ? "bg-black" : "bg-gray-300"
               }`}
             >
               <span
@@ -191,78 +214,79 @@ export default function ImageGenerator() {
             </button>
           </div>
 
-          <label className="text-sm mt-3">Image Dimensions</label>
-          <div className="w-full flex gap-4">
-            {[
-              { ratio: "1:1", width: "16px", height: "16px" },
-              { ratio: "16:9", width: "20px", height: "11.25px" },
-              { ratio: "9:16", width: "11.25px", height: "20px" },
-              { ratio: "3:2", width: "20px", height: "13.3333px" },
-              { ratio: "2:3", width: "13.3333px", height: "20px" },
-            ].map((dim) => (
-              <label
-                key={dim.ratio}
-                onClick={() => setImageDimension(dim.ratio)}
-                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200 border-white ${
-                  imageDimension === dim.ratio
-                    ? "bg-indigo-50 border-indigo-400"
-                    : "bg-white/10 hover:border-indigo-400"
-                }`}
-              >
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <div
-                    style={{ height: dim.height, width: dim.width }}
-                    className={`border transition-colors ${
-                      imageDimension == dim.ratio
-                        ? "border-black"
-                        : "border-white"
-                    }`}
-                  ></div>
-                  <span
-                    className={`text-xs mt-1 ${
-                      imageDimension === dim.ratio ? "text-black" : "text-white"
-                    }`}
-                  >
-                    {dim.ratio}
-                  </span>
-                </div>
-              </label>
-            ))}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700">
+              Image Dimensions
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { ratio: "1:1", width: "16px", height: "16px" },
+                { ratio: "16:9", width: "20px", height: "11.25px" },
+                { ratio: "9:16", width: "11.25px", height: "20px" },
+                { ratio: "3:2", width: "20px", height: "13.3333px" },
+                { ratio: "2:3", width: "13.3333px", height: "20px" },
+              ].map((dim) => (
+                <label
+                  key={dim.ratio}
+                  onClick={() => setImageDimension(dim.ratio)}
+                  className={`flex items-center justify-center h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 ${
+                    imageDimension === dim.ratio
+                      ? "bg-black border-black text-white"
+                      : "bg-gray-50 border-gray-200 hover:border-black hover:bg-gray-100"
+                  }`}
+                >
+                  <div className="flex flex-col items-center justify-center">
+                    <div
+                      style={{ height: dim.height, width: dim.width }}
+                      className={`border transition-colors ${
+                        imageDimension === dim.ratio
+                          ? "border-white"
+                          : "border-black"
+                      }`}
+                    ></div>
+                    <span className="text-xs mt-1 font-medium">
+                      {dim.ratio}
+                    </span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
-          <label className="text-sm">Number of Images</label>
-          <div className="w-full flex gap-4">
-            {[1, 2, 3, 4, 5].map((count) => (
-              <label
-                key={count}
-                onClick={() => setImageCount(count)}
-                className={`text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex items-center justify-center w-16 h-16 rounded-md border cursor-pointer transition-all duration-200
-        border-white 
-        ${
-          imageCount === count
-            ? "bg-indigo-50 border-indigo-400 text-black"
-            : "bg-white/10 hover:border-indigo-400"
-        }`}
-              >
-                {count}
-              </label>
-            ))}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-gray-700">
+              Number of Images
+            </label>
+            <div className="grid grid-cols-5 gap-3">
+              {[1, 2, 3, 4, 5].map((count) => (
+                <label
+                  key={count}
+                  onClick={() => setImageCount(count)}
+                  className={`flex items-center justify-center h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 font-bold text-lg ${
+                    imageCount === count
+                      ? "bg-black border-black text-white"
+                      : "bg-gray-50 border-gray-200 hover:border-black hover:bg-gray-100"
+                  }`}
+                >
+                  {count}
+                </label>
+              ))}
+            </div>
           </div>
 
           {/* Advanced Options Toggle */}
-          <div className="mt-4">
+          <div className="space-y-4">
             <button
               onClick={() => setIsAdvancedOpen(!isAdvancedOpen)}
-              className="cursor-pointer text-sm font-semibold flex items-center justify-between w-full bg-white/10 hover:bg-white/20 transition-all px-4 py-2 rounded-lg"
+              className="w-full text-sm font-semibold flex items-center justify-between bg-gray-50 hover:bg-gray-100 border-2 border-gray-200 hover:border-black transition-all px-6 py-4 rounded-xl"
             >
-              Advanced Options
-              <span
-                className={`transform transition-transform ${
-                  isAdvancedOpen ? "rotate-90" : ""
-                }`}
+              <span className="text-gray-700">Advanced Options</span>
+              <motion.div
+                animate={{ rotate: isAdvancedOpen ? 180 : 0 }}
+                transition={{ duration: 0.3 }}
               >
-                <ChevronDownIcon className="w-4 h-4" />
-              </span>
+                <ChevronDownIcon className="w-5 h-5 text-gray-600" />
+              </motion.div>
             </button>
 
             <AnimatePresence>
@@ -275,38 +299,58 @@ export default function ImageGenerator() {
                   transition={{ duration: 0.3 }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-4 flex flex-col gap-4 text-white">
-                    <label className="text-sm">
-                      Guidance Scale{" "}
-                      <span className="text-xs text-gray-400">
-                        (range: 1-20)
-                      </span>
-                    </label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={20}
-                      step={0.5}
-                      value={guidanceScale}
-                      onChange={handleGuidanceChange}
-                      className="bg-black border border-white/20 px-4 py-2 rounded-lg placeholder-gray-400"
-                    />
+                  <div className="space-y-4 pt-2">
+                    {/* Negative Prompt */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Negative Prompt{" "}
+                        <span className="text-xs text-gray-500">
+                          (things to avoid)
+                        </span>
+                      </label>
+                      <textarea
+                        value={negativePrompt}
+                        onChange={(e) => setNegativePrompt(e.target.value)}
+                        placeholder="Describe what you don't want to see in the image..."
+                        className="w-full bg-gray-50 border-2 border-gray-200 focus:border-black p-4 rounded-xl resize-none h-20 placeholder-gray-400 transition-all duration-200 focus:outline-none"
+                      />
+                    </div>
 
-                    <label className="text-sm">
-                      Number of Inference Steps{" "}
-                      <span className="text-xs text-gray-400">
-                        (range: 20-50)
-                      </span>
-                    </label>
-                    <input
-                      type="number"
-                      min={20}
-                      max={50}
-                      step={5}
-                      value={numInferenceSteps}
-                      onChange={handleNumInferenceStepsChange}
-                      className="bg-black border border-white/20 px-4 py-2 rounded-lg placeholder-gray-400"
-                    />
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Guidance Scale{" "}
+                        <span className="text-xs text-gray-500">
+                          (range: 1-20)
+                        </span>
+                      </label>
+                      <input
+                        type="number"
+                        min={1}
+                        max={20}
+                        step={0.5}
+                        value={guidanceScale}
+                        onChange={handleGuidanceChange}
+                        className="w-full bg-gray-50 border-2 border-gray-200 focus:border-black px-4 py-3 rounded-xl placeholder-gray-400 transition-all duration-200 focus:outline-none"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">
+                        Number of Inference Steps{" "}
+                        <span className="text-xs text-gray-500">
+                          (range: 20-50)
+                        </span>
+                      </label>
+                      <input
+                        type="number"
+                        min={20}
+                        max={50}
+                        step={5}
+                        value={numInferenceSteps}
+                        onChange={handleNumInferenceStepsChange}
+                        className="w-full bg-gray-50 border-2 border-gray-200 focus:border-black px-4 py-3 rounded-xl placeholder-gray-400 transition-all duration-200 focus:outline-none"
+                      />
+                    </div>
                   </div>
                 </motion.div>
               )}
@@ -314,27 +358,69 @@ export default function ImageGenerator() {
           </div>
 
           <Button
-            variant="outline"
             onClick={handleGenerate}
             disabled={loading || !prompt}
             size="lg"
-            className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
+            className="w-full bg-black hover:bg-gray-800 text-white py-4 rounded-xl font-semibold transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
           >
-            {loading ? "Generating..." : "Generate Image"}
+            {loading ? (
+              <div className="flex items-center gap-3">
+                <Loader />
+                Generating...
+              </div>
+            ) : (
+              "Generate Images"
+            )}
           </Button>
-        </div>
+        </motion.div>
 
         {/* Right Panel */}
-        <div className="flex-1 bg-white/5 rounded-2xl p-6 shadow-xl mt-20">
-          <h2 className="text-2xl font-bold mb-4">Generated Image Results</h2>
-          {loading && (
-            <div className="flex items-center justify-center mb-4">
-              <Loader />
+        <motion.div
+          className="flex-1 bg-white border-2 border-gray-200 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300"
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+        >
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-bold text-black">Generated Results</h2>
+            {loading && (
+              <div className="flex items-center gap-2 text-gray-600">
+                <Loader />
+                <span className="text-sm">Processing...</span>
+              </div>
+            )}
+          </div>
+
+          {generatedImages.length === 0 && !loading && (
+            <div className="flex items-center justify-center h-64 border-2 border-dashed border-gray-200 rounded-xl">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                  <svg
+                    className="w-8 h-8 text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                    />
+                  </svg>
+                </div>
+                <p className="text-gray-500 font-medium">
+                  No images generated yet
+                </p>
+                <p className="text-gray-400 text-sm">
+                  Enter a prompt and click generate to get started
+                </p>
+              </div>
             </div>
           )}
 
           <motion.div
-            className="grid grid-cols-1 sm:grid-cols-2 gap-4"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
@@ -351,18 +437,18 @@ export default function ImageGenerator() {
                   ease: "easeOut",
                 }}
                 whileHover={{
-                  scale: 1.05,
+                  scale: 1.02,
                   transition: { duration: 0.2 },
                 }}
               >
-                <div className="relative">
+                <div className="relative w-full">
                   <motion.img
                     src={src}
                     alt={`Generated ${index}`}
-                    className="max-w-full h-auto rounded-lg border border-white/10 object-contain"
+                    className="w-full h-auto rounded-xl border-2 border-gray-200 object-contain shadow-md"
                     style={{
                       maxHeight: "400px",
-                      width: "auto",
+                      objectFit: "contain",
                     }}
                     initial={{ filter: "blur(10px)" }}
                     animate={{ filter: "blur(0px)" }}
@@ -372,20 +458,20 @@ export default function ImageGenerator() {
                     }}
                   />
                   <motion.div
-                    className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
-                    whileHover={{ scale: 1.1 }}
+                    className="absolute inset-0 bg-black/60 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    whileHover={{ scale: 1.05 }}
                     transition={{ duration: 0.2 }}
                   >
                     <button
                       onClick={() => downloadSingleImage(src, index)}
-                      className="bg-white/20 backdrop-blur-sm rounded-full p-3 hover:bg-white/30 transition-colors duration-200 cursor-pointer"
+                      className="bg-white/90 backdrop-blur-sm rounded-full p-4 hover:bg-white transition-colors duration-200 cursor-pointer shadow-lg"
                     >
-                      <DownloadIcon className="w-6 h-6 text-white" />
+                      <DownloadIcon className="w-6 h-6 text-black" />
                     </button>
                   </motion.div>
                 </div>
                 <motion.p
-                  className="text-xs text-gray-400 mt-2"
+                  className="text-sm text-gray-500 mt-3 font-medium"
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{
@@ -398,37 +484,90 @@ export default function ImageGenerator() {
               </motion.div>
             ))}
           </motion.div>
+
           {generatedImages.length > 0 && (
-            <div className="flex justify-center items-center gap-5 mt-4">
+            <motion.div
+              className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8 pt-6 border-t border-gray-200"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
               <Button
-                variant="outline"
                 onClick={() => {
                   setGeneratedImages([]);
                   setPrompt("");
                 }}
-                className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
+                className="bg-white hover:bg-gray-50 border-2 border-black hover:border-gray-800 text-black px-8 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105"
               >
-                Clear
+                Clear All
               </Button>
               <Button
-                variant="outline"
                 onClick={downloadAllImages}
                 disabled={isDownloading}
-                className="mt-4 bg-white text-black py-6 rounded-lg font-semibold hover:border-indigo-400 transition-all cursor-pointer"
+                className="bg-black hover:bg-gray-800 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-200 hover:scale-105 flex items-center gap-2"
               >
-                {isDownloading
-                  ? "Downloading..."
-                  : generatedImages.length > 1
-                  ? "Download All Images"
-                  : "Download Image"}
-                <DownloadIcon className="w-4 h-4" />
-                {generatedImages.length > 1 && (
-                  <span className="text-xs text-gray-400">(.zip)</span>
+                {isDownloading ? (
+                  <>
+                    <Loader />
+                    Downloading...
+                  </>
+                ) : (
+                  <>
+                    <DownloadIcon className="w-4 h-4" />
+                    {generatedImages.length > 1
+                      ? `Download All (${generatedImages.length})`
+                      : "Download Image"}
+                    {generatedImages.length > 1 && (
+                      <span className="text-xs opacity-75">.zip</span>
+                    )}
+                  </>
                 )}
               </Button>
-            </div>
+            </motion.div>
           )}
-        </div>
+        </motion.div>
+      </div>
+
+      {/* Subtle floating elements for visual interest */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <motion.div
+          className="absolute top-32 left-10 w-2 h-2 bg-black/10 rounded-full"
+          animate={{
+            y: [0, -20, 0],
+            opacity: [0.1, 0.3, 0.1],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
+        <motion.div
+          className="absolute top-1/3 right-20 w-1 h-1 bg-black/8 rounded-full"
+          animate={{
+            y: [0, -30, 0],
+            opacity: [0.05, 0.2, 0.05],
+          }}
+          transition={{
+            duration: 6,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2,
+          }}
+        />
+        <motion.div
+          className="absolute bottom-32 left-1/4 w-1.5 h-1.5 bg-black/12 rounded-full"
+          animate={{
+            y: [0, -25, 0],
+            opacity: [0.1, 0.25, 0.1],
+          }}
+          transition={{
+            duration: 5,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
       </div>
     </div>
   );

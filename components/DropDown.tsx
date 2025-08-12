@@ -44,12 +44,12 @@ const DropDown = () => {
       <DropdownMenuContent className="bg-white/95 backdrop-blur-lg border-2 border-gray-200 rounded-xl shadow-lg p-2 mt-2 min-w-[180px]">
         <Link href="/image-generation">
           <DropdownMenuItem className="text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg px-4 py-3 cursor-pointer transition-all duration-200 font-medium text-sm focus:bg-gray-50 focus:text-black">
-            Image Generation
+            Text to Image
           </DropdownMenuItem>
         </Link>
         <Link href="/image-editor">
           <DropdownMenuItem className="text-gray-700 hover:text-black hover:bg-gray-50 rounded-lg px-4 py-3 cursor-pointer transition-all duration-200 font-medium text-sm focus:bg-gray-50 focus:text-black">
-            Inpainting
+            Image Inpainting
           </DropdownMenuItem>
         </Link>
       </DropdownMenuContent>

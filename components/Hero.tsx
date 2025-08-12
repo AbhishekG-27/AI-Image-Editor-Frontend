@@ -24,6 +24,10 @@ const Hero = () => {
       src: "/carousel-3.png",
       caption: "Professional Photo Enhancement",
     },
+    {
+      src: "/carousel-4.png",
+      caption: "Professional Photo Enhancement",
+    },
   ];
 
   // Get responsive values based on current window width

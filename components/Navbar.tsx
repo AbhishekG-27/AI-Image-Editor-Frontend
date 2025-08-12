@@ -33,7 +33,7 @@ const Navbar = () => {
       if (!user) return;
       setCurrentUser(user);
     } catch (error) {
-      console.error("Error fetching current user:", error);
+      // console.error("Error fetching current user:", error);
       return null;
     }
   };

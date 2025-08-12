@@ -117,6 +117,7 @@ export const createAccount = async ({
         email,
         avatar: "",
         accountId,
+        credits: 10, // Default credits
       }
     );
     return parseStringify({

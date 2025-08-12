@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { useWindowScroll } from "react-use";
-import { PiPaperPlaneTiltLight } from "react-icons/pi";
+import { PiPaperPlane, PiPaperPlaneTiltLight } from "react-icons/pi";
 import { IoMenu, IoClose } from "react-icons/io5";
 import Button from "./Button";
 import Link from "next/link";
@@ -22,6 +22,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
+  const [credits, setCredits] = useState(null); // Default credits
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -32,6 +33,7 @@ const Navbar = () => {
       const user = await getCurrentSession();
       if (!user) return;
       setCurrentUser(user);
+      setCredits(user.credits);
     } catch (error) {
       // console.error("Error fetching current user:", error);
       return null;
@@ -133,18 +135,32 @@ const Navbar = () => {
             <DropDown />
           </div>
 
-          {/* Right side - Launch button */}
-          <Link href="/image-editor">
-            <Button
-              id="launch-button"
-              title="Launch"
-              containerClass="bg-white hover:bg-gray-50 border-2 border-black hover:border-gray-800 text-black px-6 py-2 rounded-full flex items-center cursor-pointer justify-center gap-2 transition-all duration-200 hover:scale-105 font-medium text-sm"
-              rightIcon={<PiPaperPlaneTiltLight className="w-4 h-4" />}
-              leftIcon={null}
-              onClick={() => {}}
-              disabled={false}
-            />
-          </Link>
+          {/* Right side - Available credits */}
+          {credits && (
+            <div className="credits-display bg-black text-white px-5 py-2 rounded-full flex items-center gap-2 font-semibold text-sm select-none shadow-lg cursor-default">
+              <span className="text-gray-300 tracking-wide uppercase">
+                Available Credits:
+              </span>
+              <span className="text-white text-lg tracking-wider">
+                {credits}
+              </span>
+              <PiPaperPlane className="w-5 h-5 text-white animate-float" />
+              <style>{`
+              @keyframes float {
+                0%,
+                100% {
+                  transform: translateY(0px);
+                }
+                50% {
+                  transform: translateY(-6px);
+                }
+              }
+              .animate-float {
+                animation: float 3s ease-in-out infinite;
+              }
+            `}</style>
+            </div>
+          )}
         </nav>
 
         {/* Mobile Nav Items */}

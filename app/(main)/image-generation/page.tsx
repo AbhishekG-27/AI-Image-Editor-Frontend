@@ -4,6 +4,13 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDownIcon, DownloadIcon } from "lucide-react";
 import JSZip from "jszip";
+import { PiPaperPlane } from "react-icons/pi";
+import {
+  getCurrentSession,
+  updateUserCredits,
+} from "@/lib/actions/user.actions";
+import { FailAlert } from "@/components/FailAlert";
+import { SuccessAlert } from "@/components/SuccessAlert";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -17,15 +24,52 @@ export default function ImageGenerator() {
   const [numInferenceSteps, setNumInferenceSteps] = useState(30);
   const [showSensitiveContent, setShowSensitiveContent] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [creditsRequired, setCreditsRequired] = useState(3);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   // Enhanced spinner component with black and white theme
   const Loader = () => (
     <div className="w-6 h-6 border-4 border-t-transparent border-black rounded-full animate-spin"></div>
   );
 
+  const getCurrentUser = async () => {
+    try {
+      const user = await getCurrentSession();
+      if (!user) return null;
+      else {
+        return user;
+      }
+    } catch (error) {
+      // console.error("Error fetching current user:", error);
+      return null;
+    }
+  };
+
   const handleGenerate = async () => {
     setLoading(true);
     setGeneratedImages([]);
+
+    // check if the user is signed in before generating images.
+    const user = await getCurrentUser();
+    if (!user) {
+      setLoading(false);
+      setErrorMessage("User not found! Please Log in.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 4000);
+      return;
+    }
+
+    // if user is signed in check if they have enough credits
+    if (user.credits < creditsRequired) {
+      setLoading(false);
+      setErrorMessage("Insufficient credits");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 4000);
+      return;
+    }
 
     const formData = new FormData();
     formData.append("prompt", prompt);
@@ -48,7 +92,7 @@ export default function ImageGenerator() {
     }
 
     try {
-      const response = await fetch(`${process.env.BACKEND_URL!}/generate`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/generate`, {
         method: "POST",
         body: formData,
       });
@@ -62,6 +106,19 @@ export default function ImageGenerator() {
             (b64: string) => `data:image/png;base64,${b64}`
           )
         );
+
+        // Deduct credits from user
+        const newCredits = Math.max(0, user.credits - creditsRequired);
+        const updateduser = await updateUserCredits(user.$id, newCredits);
+        if (updateduser) {
+          setLoading(false);
+          setSuccessMessage("Generation Successful!");
+          setTimeout(() => {
+            setSuccessMessage("");
+          }, 4000);
+        } else {
+          console.error("Failed to update user credits");
+        }
       } else {
         setGeneratedImages([]);
       }
@@ -258,7 +315,10 @@ export default function ImageGenerator() {
               {[1, 2, 3, 4, 5].map((count) => (
                 <label
                   key={count}
-                  onClick={() => setImageCount(count)}
+                  onClick={() => {
+                    setImageCount(count);
+                    setCreditsRequired(count * 3);
+                  }}
                   className={`flex items-center justify-center h-16 rounded-xl border-2 cursor-pointer transition-all duration-200 font-bold text-lg ${
                     imageCount === count
                       ? "bg-black border-black text-white"
@@ -366,7 +426,11 @@ export default function ImageGenerator() {
                 Generating...
               </div>
             ) : (
-              "Generate Images"
+              <span className="flex items-center gap-2">
+                Generate Images{" "}
+                <PiPaperPlane className="w-5 h-5 text-white animate-float" />{" "}
+                {creditsRequired}
+              </span>
             )}
           </Button>
         </motion.div>
@@ -566,6 +630,10 @@ export default function ImageGenerator() {
           }}
         />
       </div>
+      {successMessage && (
+        <SuccessAlert title="Success" message={successMessage} />
+      )}
+      {errorMessage && <FailAlert title="Error" message={errorMessage} />}
     </div>
   );
 }

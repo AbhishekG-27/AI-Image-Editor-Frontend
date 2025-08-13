@@ -7,7 +7,9 @@ import { parseStringify } from "../utils";
 import { cookies } from "next/headers";
 
 export const getCurrentSession = async () => {
-  const { account, databases } = await createSessionClient();
+  const session = await createSessionClient();
+  if (!session) return;
+  const { account, databases } = session;
   try {
     const result = await account.get();
     const user = await databases.listDocuments(
@@ -125,5 +127,28 @@ export const createAccount = async ({
       message: "Account created successfully",
       redirect: false,
     });
+  }
+};
+
+export const updateUserCredits = async (
+  documentId: string,
+  newCreditsAmount: number
+) => {
+  try {
+    const { databases } = await createAdminClient();
+
+    const updatedUser = await databases.updateDocument(
+      appwriteConfig.databaseId,
+      appwriteConfig.usersCollectionId,
+      documentId,
+      {
+        credits: newCreditsAmount,
+      }
+    );
+
+    return parseStringify(updatedUser);
+  } catch (error) {
+    console.error("Error updating user credits:", error);
+    throw new Error("Failed to update user credits");
   }
 };

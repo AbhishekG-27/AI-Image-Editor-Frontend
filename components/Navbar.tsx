@@ -31,9 +31,11 @@ const Navbar = () => {
   const getCurrentUser = async () => {
     try {
       const user = await getCurrentSession();
-      if (!user) return;
-      setCurrentUser(user);
-      setCredits(user.credits);
+      if (!user) setCurrentUser(null);
+      else {
+        setCurrentUser(user);
+        setCredits(user.credits);
+      }
     } catch (error) {
       // console.error("Error fetching current user:", error);
       return null;

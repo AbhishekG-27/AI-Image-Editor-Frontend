@@ -11,6 +11,7 @@ import {
 } from "@/lib/actions/user.actions";
 import { FailAlert } from "@/components/FailAlert";
 import { SuccessAlert } from "@/components/SuccessAlert";
+import { useCredits } from "@/contexts/CreditsContext";
 
 export default function ImageGenerator() {
   const [prompt, setPrompt] = useState("");
@@ -27,6 +28,9 @@ export default function ImageGenerator() {
   const [creditsRequired, setCreditsRequired] = useState(3);
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Use the credits context
+  const { credits, deductCredits, refreshCredits } = useCredits();
 
   // Enhanced spinner component with black and white theme
   const Loader = ({ className }: { className?: string }) => (
@@ -50,7 +54,6 @@ export default function ImageGenerator() {
 
   const handleGenerate = async () => {
     setLoading(true);
-    setGeneratedImages([]);
 
     // check if the user is signed in before generating images.
     const user = await getCurrentUser();
@@ -63,8 +66,8 @@ export default function ImageGenerator() {
       return;
     }
 
-    // if user is signed in check if they have enough credits
-    if (user.credits < creditsRequired) {
+    // Check credits using context
+    if (!credits || credits < creditsRequired) {
       setLoading(false);
       setErrorMessage("Insufficient credits");
       setTimeout(() => {
@@ -112,10 +115,14 @@ export default function ImageGenerator() {
           )
         );
 
-        // Deduct credits from user
-        const newCredits = Math.max(0, user.credits - creditsRequired);
-        const updateduser = await updateUserCredits(user.$id, newCredits);
-        if (updateduser) {
+        // Update credits in database
+        const newCredits = Math.max(0, credits - creditsRequired);
+        const updatedUser = await updateUserCredits(user.$id, newCredits);
+
+        if (updatedUser) {
+          // Update credits in context - this will automatically update navbar
+          deductCredits(creditsRequired);
+
           setLoading(false);
           setSuccessMessage("Generation Successful!");
           setTimeout(() => {
@@ -123,6 +130,8 @@ export default function ImageGenerator() {
           }, 4000);
         } else {
           console.error("Failed to update user credits");
+          // Optionally refresh credits from server
+          await refreshCredits();
         }
       } else {
         setGeneratedImages([]);

@@ -7,6 +7,7 @@ import Button from "./Button";
 import Link from "next/link";
 import DropDown from "./DropDown";
 import { getCurrentSession } from "@/lib/actions/user.actions";
+import { useCredits } from "@/contexts/CreditsContext";
 
 const Navbar = () => {
   const navItems = [
@@ -22,7 +23,9 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isNavVisible, setIsNavVisible] = useState(true);
   const [currentUser, setCurrentUser] = useState(null);
-  const [credits, setCredits] = useState(null); // Default credits
+
+  // Use the credits context
+  const { credits, refreshCredits } = useCredits();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen((prev) => !prev);
@@ -31,27 +34,26 @@ const Navbar = () => {
   const getCurrentUser = async () => {
     try {
       const user = await getCurrentSession();
-      if (!user) setCurrentUser(null);
-      else {
+      if (!user) {
+        setCurrentUser(null);
+      } else {
         setCurrentUser(user);
-        setCredits(user.credits);
+        // Don't set credits here anymore, let context handle it
       }
     } catch (error) {
-      // console.error("Error fetching current user:", error);
+      console.error("Error fetching current user:", error);
       return null;
     }
   };
 
   useEffect(() => {
-    const threshold = 10; // small scroll offset to avoid jitter
+    const threshold = 10;
 
     if (Math.abs(currentScrollY - lastScrollY.current) < threshold) return;
 
     if (currentScrollY > lastScrollY.current) {
-      // scrolling down
       setIsNavVisible(false);
     } else {
-      // scrolling up
       setIsNavVisible(true);
     }
 
@@ -65,13 +67,13 @@ const Navbar = () => {
       document.body.classList.remove("overflow-hidden");
     }
 
-    // Cleanup on unmount just in case
     return () => document.body.classList.remove("overflow-hidden");
   }, [isMobileMenuOpen]);
 
   useEffect(() => {
     getCurrentUser();
-  }, []);
+    refreshCredits(); // Refresh credits when component mounts
+  }, [refreshCredits]);
 
   return (
     <div
@@ -138,7 +140,7 @@ const Navbar = () => {
           </div>
 
           {/* Right side - Available credits */}
-          {credits && (
+          {credits !== null && (
             <div className="credits-display bg-black text-white px-5 py-2 rounded-full flex items-center gap-2 font-semibold text-sm select-none shadow-lg cursor-default">
               <span className="text-gray-300 tracking-wide uppercase">
                 Available Credits:

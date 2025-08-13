@@ -29,8 +29,10 @@ export default function ImageGenerator() {
   const [successMessage, setSuccessMessage] = useState("");
 
   // Enhanced spinner component with black and white theme
-  const Loader = () => (
-    <div className="w-6 h-6 border-4 border-t-transparent border-black rounded-full animate-spin"></div>
+  const Loader = ({ className }: { className?: string }) => (
+    <div
+      className={`w-6 h-6 border-4 border-t-transparent rounded-full animate-spin ${className}`}
+    ></div>
   );
 
   const getCurrentUser = async () => {
@@ -92,10 +94,13 @@ export default function ImageGenerator() {
     }
 
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL!}/generate`, {
-        method: "POST",
-        body: formData,
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL!}/generate`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!response.ok) throw new Error("Server error");
 
@@ -123,6 +128,10 @@ export default function ImageGenerator() {
         setGeneratedImages([]);
       }
     } catch (err) {
+      setErrorMessage("Image generation failed! Please try again later.");
+      setTimeout(() => {
+        setErrorMessage("");
+      }, 4000);
       console.error("Generation failed:", err);
     } finally {
       setLoading(false);
@@ -422,8 +431,8 @@ export default function ImageGenerator() {
           >
             {loading ? (
               <div className="flex items-center gap-3">
-                <Loader />
                 Generating...
+                <Loader className="border-white" />
               </div>
             ) : (
               <span className="flex items-center gap-2">
@@ -446,7 +455,7 @@ export default function ImageGenerator() {
             <h2 className="text-2xl font-bold text-black">Generated Results</h2>
             {loading && (
               <div className="flex items-center gap-2 text-gray-600">
-                <Loader />
+                <Loader className="border-black" />
                 <span className="text-sm">Processing...</span>
               </div>
             )}
@@ -569,8 +578,8 @@ export default function ImageGenerator() {
               >
                 {isDownloading ? (
                   <>
-                    <Loader />
                     Downloading...
+                    <Loader className="border-black" />
                   </>
                 ) : (
                   <>
